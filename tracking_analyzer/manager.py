@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.gis.geoip2 import GeoIP2, GeoIP2Exception
 from django.db import models
 from django.http import HttpRequest
+from user_agents import parse
 
 from geoip2.errors import GeoIP2Error
 from ipware.ip import get_real_ip
@@ -35,14 +36,17 @@ class TrackerManager(models.Manager):
 
         user = request.user
         user = user if isinstance(user, User) else None
+        # ASGI Request does not have user_agent, so we create here
+        _ua_string = request.META.get('HTTP_USER_AGENT', '')
+        user_agent = parse(_ua_string)
 
-        if request.user_agent.is_mobile:
+        if user_agent.is_mobile:
             device_type = self.model.MOBILE
-        elif request.user_agent.is_tablet:
+        elif user_agent.is_tablet:
             device_type = self.model.TABLET
-        elif request.user_agent.is_pc:
+        elif user_agent.is_pc:
             device_type = self.model.PC
-        elif request.user_agent.is_bot:
+        elif user_agent.is_bot:
             device_type = self.model.BOT
         else:
             device_type = self.model.UNKNOWN
@@ -72,11 +76,11 @@ class TrackerManager(models.Manager):
             ip_city=city.get('city', '') or '',
             referrer=request.META.get('HTTP_REFERER', ''),
             device_type=device_type,
-            device=request.user_agent.device.family,
-            browser=request.user_agent.browser.family,
-            browser_version=request.user_agent.browser.version_string,
-            system=request.user_agent.os.family,
-            system_version=request.user_agent.os.version_string,
+            device=user_agent.device.family,
+            browser=user_agent.browser.family,
+            browser_version=user_agent.browser.version_string,
+            system=user_agent.os.family,
+            system_version=user_agent.os.version_string,
             user=user
         )
         logger.info(
