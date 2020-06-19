@@ -55,6 +55,10 @@ class TrackerManager(models.Manager):
 
         # Get the IP address and so the geographical info, if available.
         ip_address = get_real_ip(request) or ''
+        # get test ip if there was no one
+        if not ip_address:
+            ip_address = '172.217.168.67' # a google ip just for test
+
         if not ip_address:
             logger.debug(
                 'Could not determine IP address for request %s', request)
