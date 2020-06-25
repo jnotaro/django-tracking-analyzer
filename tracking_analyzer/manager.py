@@ -35,7 +35,7 @@ class TrackerManager(models.Manager):
             '`content_object` is not a Django model'
 
         user = request.user
-        user = user if isinstance(user, User) else None
+        #user = user if isinstance(user, User) else None
         # ASGI Request does not have user_agent, so we create here
         _ua_string = request.META.get('HTTP_USER_AGENT', '')
         user_agent = parse(_ua_string)
